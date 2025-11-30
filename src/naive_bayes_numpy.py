@@ -99,26 +99,32 @@ class GaussianNaiveBayesNumPy:
         logger.info("Training completed successfully")
         return self
 
-    def _calculate_gaussian_pdf(self, x: float, mean: float, variance: float) -> float:
-        """Calculate Gaussian PDF: (1/√(2πσ²)) * exp(-(x-μ)²/(2σ²))"""
-        variance = variance + self.epsilon_
-        coefficient = 1.0 / np.sqrt(2 * np.pi * variance)
-        exponent = np.exp(-((x - mean) ** 2) / (2 * variance))
-        return coefficient * exponent
+    def _calculate_log_posterior(self, X: np.ndarray) -> np.ndarray:
+        """
+        Calculate log posterior probability of each class for each sample.
+        Uses vectorized operations for efficiency.
+        log P(y|X) ∝ log P(y) + Σ log P(x_i|y)
+        """
+        # Log priors (n_classes,)
+        log_priors = np.log(self.class_priors_ + self.epsilon_)
 
-    def _calculate_log_posterior(self, x: np.ndarray) -> np.ndarray:
-        """Calculate log posterior: log P(y|X) = log P(y) + Σ log P(x_i|y)"""
-        log_posteriors = []
-        for idx in range(len(self.classes_)):
-            log_prior = np.log(self.class_priors_[idx] + self.epsilon_)
-            log_likelihood = 0.0
-            for feat_idx in range(len(x)):
-                pdf = self._calculate_gaussian_pdf(
-                    x[feat_idx], self.means_[idx, feat_idx], self.variances_[idx, feat_idx]
-                )
-                log_likelihood += np.log(pdf + self.epsilon_)
-            log_posteriors.append(log_prior + log_likelihood)
-        return np.array(log_posteriors)
+        # Variances with smoothing
+        variances = self.variances_ + self.epsilon_
+
+        # Log likelihood calculation using broadcasting
+        # (n_samples, n_classes, n_features)
+        numerator = (X[:, np.newaxis, :] - self.means_) ** 2
+        denominator = 2 * variances
+        
+        # Sum log likelihoods over features
+        # Shape: (n_samples, n_classes)
+        log_likelihoods = -0.5 * np.sum(
+            numerator / denominator + np.log(2 * np.pi * variances), axis=2
+        )
+
+        # Log posterior
+        # Shape: (n_samples, n_classes)
+        return log_priors + log_likelihoods
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -160,13 +166,15 @@ class GaussianNaiveBayesNumPy:
             raise ValueError("X contains NaN or Inf values")
 
         logger.info(f"Predicting labels for {len(X)} samples")
-        predictions = []
-        for x in X:
-            log_posteriors = self._calculate_log_posterior(x)
-            predicted_class = self.classes_[np.argmax(log_posteriors)]
-            predictions.append(predicted_class)
+        
+        # Calculate log posteriors for all samples at once
+        log_posteriors = self._calculate_log_posterior(X)
+        
+        # Get the class with the highest log posterior for each sample
+        predictions = self.classes_[np.argmax(log_posteriors, axis=1)]
+        
         logger.info("Prediction completed")
-        return np.array(predictions)
+        return predictions
 
     def get_params(self) -> Dict[str, np.ndarray]:
         """Get learned model parameters."""

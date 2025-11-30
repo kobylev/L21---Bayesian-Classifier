@@ -52,12 +52,7 @@ class GaussianNaiveBayesSklearn:
         self.classes_ = self.model_.classes_
         self.means_ = self.model_.theta_  # Feature means
         self.variances_ = self.model_.var_  # Feature variances
-
-        # Convert log priors to priors (handle both old and new sklearn versions)
-        if hasattr(self.model_, 'class_log_prior_'):
-            self.class_priors_ = np.exp(self.model_.class_log_prior_)
-        else:
-            self.class_priors_ = self.model_.class_prior_
+        self.class_priors_ = self.model_.class_prior_
 
         # Log learned parameters
         logger.info("Learned parameters:")

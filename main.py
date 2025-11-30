@@ -32,7 +32,7 @@ def setup_logging(log_file: str = "logs/iris_classification.log") -> None:
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     date_fmt = '%Y-%m-%d %H:%M:%S'
 
-    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter(log_fmt, date_fmt))
 
