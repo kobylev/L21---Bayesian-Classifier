@@ -1,13 +1,7 @@
 """
 Model Comparison and Visualization Module
 
-This module provides functions to compare predictions and visualize results
-from both NumPy and sklearn implementations of Gaussian Naive Bayes.
-
-Functions:
-    compare_predictions: Compare predictions between two implementations
-    visualize_confusion_matrices: Create side-by-side confusion matrix plots
-    generate_comparison_report: Generate comprehensive comparison report
+Compare predictions and visualize results from NumPy and sklearn implementations.
 """
 
 import logging

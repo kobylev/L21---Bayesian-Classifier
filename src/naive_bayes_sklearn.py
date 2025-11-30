@@ -1,12 +1,7 @@
 """
 Gaussian Naive Bayes - Scikit-Learn Implementation
 
-This module provides a wrapper around scikit-learn's GaussianNB classifier
-with enhanced logging and parameter inspection for comparison with the
-manual NumPy implementation.
-
-Classes:
-    GaussianNaiveBayesSklearn: Wrapper around sklearn's GaussianNB
+Wrapper around sklearn's GaussianNB with enhanced logging and parameter inspection.
 """
 
 import logging
@@ -44,21 +39,10 @@ class GaussianNaiveBayesSklearn:
         self.variances_ = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'GaussianNaiveBayesSklearn':
-        """
-        Train the sklearn Gaussian Naive Bayes model.
-
-        Args:
-            X: Training features of shape (n_samples, n_features)
-            y: Training labels of shape (n_samples,)
-
-        Returns:
-            self: Trained classifier instance
-        """
+        """Train the sklearn Gaussian Naive Bayes model."""
         logger.info("Training Gaussian Naive Bayes (Scikit-Learn implementation)")
-
         n_samples, n_features = X.shape
         n_classes = len(np.unique(y))
-
         logger.info(f"  Samples: {n_samples}, Features: {n_features}, Classes: {n_classes}")
 
         # Train the model
