@@ -34,7 +34,51 @@ class GaussianNaiveBayesNumPy:
         self.epsilon_: float = var_smoothing
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'GaussianNaiveBayesNumPy':
-        """Train the model by calculating priors, means, and variances."""
+        """
+        Train the model by calculating priors, means, and variances.
+
+        Args:
+            X: Training features of shape (n_samples, n_features)
+            y: Training labels of shape (n_samples,)
+
+        Returns:
+            Self (for method chaining)
+
+        Raises:
+            ValueError: If X and y have incompatible shapes or contain invalid values
+            TypeError: If inputs are not numpy arrays
+
+        Example:
+            >>> model = GaussianNaiveBayesNumPy()
+            >>> X_train = np.array([[1, 2], [3, 4], [5, 6]])
+            >>> y_train = np.array([0, 1, 0])
+            >>> model.fit(X_train, y_train)
+        """
+        # Input validation
+        if not isinstance(X, np.ndarray):
+            raise TypeError(f"X must be a numpy array, got {type(X).__name__}")
+        if not isinstance(y, np.ndarray):
+            raise TypeError(f"y must be a numpy array, got {type(y).__name__}")
+
+        if X.ndim != 2:
+            raise ValueError(f"X must be 2-dimensional, got shape {X.shape}")
+        if y.ndim != 1:
+            raise ValueError(f"y must be 1-dimensional, got shape {y.shape}")
+
+        if X.shape[0] != y.shape[0]:
+            raise ValueError(
+                f"X and y must have same number of samples. "
+                f"Got X: {X.shape[0]}, y: {y.shape[0]}"
+            )
+
+        if X.shape[0] == 0:
+            raise ValueError("Cannot fit model with 0 samples")
+
+        if np.any(np.isnan(X)) or np.any(np.isinf(X)):
+            raise ValueError("X contains NaN or Inf values")
+        if np.any(np.isnan(y)) or np.any(np.isinf(y)):
+            raise ValueError("y contains NaN or Inf values")
+
         logger.info("Training Gaussian Naive Bayes (NumPy implementation)")
         n_samples, n_features = X.shape
         self.classes_ = np.unique(y)
@@ -77,7 +121,44 @@ class GaussianNaiveBayesNumPy:
         return np.array(log_posteriors)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Predict class labels using MAP estimation."""
+        """
+        Predict class labels using MAP estimation.
+
+        Args:
+            X: Test features of shape (n_samples, n_features)
+
+        Returns:
+            Predicted class labels of shape (n_samples,)
+
+        Raises:
+            ValueError: If model hasn't been trained or X has wrong shape
+
+        Example:
+            >>> X_test = np.array([[2, 3], [4, 5]])
+            >>> predictions = model.predict(X_test)
+        """
+        # Check if model has been trained
+        if self.classes_ is None:
+            raise ValueError(
+                "Model has not been trained yet. Call fit() before predict()"
+            )
+
+        # Input validation
+        if not isinstance(X, np.ndarray):
+            raise TypeError(f"X must be a numpy array, got {type(X).__name__}")
+
+        if X.ndim != 2:
+            raise ValueError(f"X must be 2-dimensional, got shape {X.shape}")
+
+        if X.shape[1] != self.means_.shape[1]:
+            raise ValueError(
+                f"X has {X.shape[1]} features, but model was trained with "
+                f"{self.means_.shape[1]} features"
+            )
+
+        if np.any(np.isnan(X)) or np.any(np.isinf(X)):
+            raise ValueError("X contains NaN or Inf values")
+
         logger.info(f"Predicting labels for {len(X)} samples")
         predictions = []
         for x in X:

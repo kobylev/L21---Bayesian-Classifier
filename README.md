@@ -782,10 +782,68 @@ pytest tests/ -v
 
 **Code Quality Metrics**:
 - All modules ≤200 lines
-- Full type coverage
-- 100% test passing rate
+- Full type coverage (100%)
+- 100% test passing rate (41/41 tests)
 - No code duplication
 - Clear naming conventions
+- Comprehensive input validation on all public methods
+- Actionable error messages with clear guidance
+- Constants module for configuration management
+- Enhanced docstrings with usage examples
+
+### 6. Input Validation & Error Handling
+
+**Comprehensive Validation**:
+
+All public methods validate inputs before processing:
+
+```python
+# Example: fit() method validation
+- TypeError: Checks if inputs are numpy arrays
+- ValueError: Validates array dimensions (X must be 2D, y must be 1D)
+- ValueError: Ensures X and y have matching sample counts
+- ValueError: Rejects empty datasets
+- ValueError: Detects NaN or Inf values
+
+# Example error message:
+>>> model.fit(X_wrong_shape, y)
+ValueError: X must be 2-dimensional, got shape (100,)
+```
+
+**Actionable Error Messages**:
+
+Error messages provide clear guidance on how to fix issues:
+
+```python
+# Before prediction
+>>> model.predict(X_test)  # Without training first
+ValueError: Model has not been trained yet. Call fit() before predict()
+
+# Feature mismatch
+>>> model.predict(X_wrong_features)
+ValueError: X has 5 features, but model was trained with 4 features
+```
+
+**Constants Module** ([src/constants.py](src/constants.py)):
+
+Centralized configuration eliminates magic numbers:
+
+```python
+from src.constants import (
+    DEFAULT_VAR_SMOOTHING,  # 1e-9
+    DEFAULT_TEST_SIZE,      # 0.25
+    DEFAULT_RANDOM_SEED,    # 42
+    MIN_ACCURACY_THRESHOLD, # 0.90
+    CLASS_LABELS,           # {0: 'Iris-setosa', ...}
+    FEATURE_NAMES           # ['SepalLengthCm', ...]
+)
+```
+
+**Benefits**:
+- Easy configuration updates
+- No scattered magic numbers
+- Self-documenting code
+- Consistent values across modules
 
 ## References
 
