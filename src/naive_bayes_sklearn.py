@@ -5,10 +5,10 @@ Wrapper around sklearn's GaussianNB with enhanced logging and parameter inspecti
 """
 
 import logging
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from typing import Tuple
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -30,13 +30,13 @@ class GaussianNaiveBayesSklearn:
         variances_: Feature variances (var_) for each class
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the sklearn Gaussian Naive Bayes wrapper."""
-        self.model_ = GaussianNB()
-        self.classes_ = None
-        self.class_priors_ = None
-        self.means_ = None
-        self.variances_ = None
+        self.model_: GaussianNB = GaussianNB()
+        self.classes_: Optional[np.ndarray] = None
+        self.class_priors_: Optional[np.ndarray] = None
+        self.means_: Optional[np.ndarray] = None
+        self.variances_: Optional[np.ndarray] = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'GaussianNaiveBayesSklearn':
         """Train the sklearn Gaussian Naive Bayes model."""
@@ -82,7 +82,7 @@ class GaussianNaiveBayesSklearn:
         logger.info("Prediction completed")
         return predictions
 
-    def get_params(self) -> dict:
+    def get_params(self) -> Dict[str, np.ndarray]:
         """
         Get learned model parameters.
 
@@ -100,7 +100,7 @@ class GaussianNaiveBayesSklearn:
 def evaluate_model(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    class_names: list
+    class_names: List[str]
 ) -> Tuple[float, np.ndarray, str]:
     """
     Evaluate model performance with comprehensive metrics.
@@ -138,9 +138,9 @@ def evaluate_model(
 
 
 def compare_parameters(
-    numpy_params: dict,
-    sklearn_params: dict,
-    feature_names: list
+    numpy_params: Dict[str, np.ndarray],
+    sklearn_params: Dict[str, np.ndarray],
+    feature_names: List[str]
 ) -> None:
     """
     Compare learned parameters between NumPy and sklearn implementations.

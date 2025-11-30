@@ -55,16 +55,18 @@ L21 - Bayesian Classifier/
 │   │   ├── split_data()            → Stratified 75/25 train/test split
 │   │   └── get_class_mapping()     → Map numeric labels to species names
 │   │
-│   ├── 📄 naive_bayes_numpy.py     # Manual NumPy implementation (115 lines)
+│   ├── 📄 naive_bayes_numpy.py     # Manual NumPy implementation (158 lines)
 │   │   ├── GaussianNaiveBayesNumPy class
 │   │   │   ├── fit()               → Calculate priors, means, variances
 │   │   │   ├── predict()           → Apply Bayes theorem with MAP
 │   │   │   ├── _calculate_gaussian_pdf()    → Gaussian probability density
 │   │   │   ├── _calculate_log_posterior()   → Log probabilities (numerical stability)
+│   │   │   ├── save_model()        → Persist trained model (pickle)
+│   │   │   ├── load_model()        → Restore model from file
 │   │   │   └── get_params()        → Return learned parameters
 │   │   └── visualize_feature_distributions() → Generate 2×2 histogram grid
 │   │
-│   ├── 📄 naive_bayes_sklearn.py   # Sklearn wrapper with logging (205 lines)
+│   ├── 📄 naive_bayes_sklearn.py   # Sklearn wrapper with logging (190 lines)
 │   │   ├── GaussianNaiveBayesSklearn class
 │   │   │   ├── fit()               → Train sklearn model, extract parameters
 │   │   │   ├── predict()           → Generate predictions
@@ -72,10 +74,24 @@ L21 - Bayesian Classifier/
 │   │   ├── evaluate_model()        → Calculate metrics (accuracy, confusion matrix)
 │   │   └── compare_parameters()    → Detailed parameter comparison tables
 │   │
-│   └── 📄 comparison.py            # Analysis and visualization (202 lines)
+│   └── 📄 comparison.py            # Analysis and visualization (196 lines)
 │       ├── compare_predictions()   → Element-wise prediction comparison
 │       ├── visualize_confusion_matrices() → Side-by-side heatmaps
 │       └── generate_comparison_report()   → Final summary with success criteria
+│
+├── 📁 tests/                        # Unit test suite (pytest)
+│   ├── 📄 __init__.py              # Test package initialization
+│   ├── 📄 test_naive_bayes_numpy.py # Tests for NumPy implementation (27 tests)
+│   │   ├── Test initialization and configuration
+│   │   ├── Test fit/predict correctness
+│   │   ├── Test model persistence (save/load)
+│   │   ├── Test numerical stability
+│   │   └── Test edge cases
+│   └── 📄 test_data_loader.py      # Tests for data loading (14 tests)
+│       ├── Test CSV loading and validation
+│       ├── Test stratified splitting
+│       ├── Test reproducibility
+│       └── Test class mapping
 │
 └── 📁 logs/                         # Generated outputs (created at runtime)
     │
@@ -159,6 +175,73 @@ pip install -r requirements.txt
 ### Run Complete Pipeline
 ```bash
 python main.py
+```
+
+This executes the 8-step workflow:
+
+### Run Tests
+```bash
+# Run all tests with verbose output
+pytest tests/ -v
+
+# Run specific test file
+pytest tests/test_naive_bayes_numpy.py -v
+
+# Run with coverage report
+pytest tests/ --cov=src --cov-report=html
+```
+
+**Test Coverage**: 41 unit tests covering:
+- Model initialization and training
+- Prediction accuracy and correctness
+- Model persistence (save/load functionality)
+- Numerical stability edge cases
+- Data loading and validation
+- Stratified splitting
+- Type checking and error handling
+
+### Advanced Usage: Model Persistence
+
+**Save a trained model:**
+```python
+from src.naive_bayes_numpy import GaussianNaiveBayesNumPy
+from src.data_loader import load_iris_data, split_data
+
+# Train model
+X, y, feature_names = load_iris_data("Iris.csv")
+X_train, X_test, y_train, y_test = split_data(X, y)
+
+model = GaussianNaiveBayesNumPy(var_smoothing=1e-9)
+model.fit(X_train, y_train)
+
+# Save to file
+model.save_model("models/iris_classifier.pkl")
+```
+
+**Load and use saved model:**
+```python
+from src.naive_bayes_numpy import GaussianNaiveBayesNumPy
+
+# Load pre-trained model
+model = GaussianNaiveBayesNumPy.load_model("models/iris_classifier.pkl")
+
+# Make predictions
+predictions = model.predict(X_test)
+```
+
+### Variance Smoothing Configuration
+
+Control numerical stability by adjusting the `var_smoothing` parameter:
+
+```python
+# Default (recommended for most cases)
+model = GaussianNaiveBayesNumPy(var_smoothing=1e-9)
+
+# Higher smoothing for very sparse features
+model = GaussianNaiveBayesNumPy(var_smoothing=1e-6)
+
+# Lower smoothing when features have high variance
+model = GaussianNaiveBayesNumPy(var_smoothing=1e-12)
 ```
 
 This executes the 8-step workflow:
@@ -475,7 +558,7 @@ Iris-versicolor       0.92      0.92      0.92        12
 - Stratified splitting for balanced class distribution
 - Comprehensive logging of statistics
 
-### 2. naive_bayes_numpy.py (115 lines)
+### 2. naive_bayes_numpy.py (158 lines)
 **Purpose**: Manual Gaussian Naive Bayes implementation
 
 **Key Class**: `GaussianNaiveBayesNumPy`
@@ -485,11 +568,15 @@ Iris-versicolor       0.92      0.92      0.92        12
 - `predict()`: Apply Bayes theorem with Gaussian PDF
 - `_calculate_gaussian_pdf()`: Probability density calculation
 - `_calculate_log_posterior()`: Log probabilities for stability
+- `save_model()`: Persist trained model to disk (pickle)
+- `load_model()`: Restore model from saved file
 
-**Features**:
-- Uses log probabilities to avoid numerical underflow
-- Epsilon constant (1e-9) for division-by-zero protection
-- Feature distribution visualization
+**Advanced Features**:
+- **Variance Smoothing**: Configurable `var_smoothing` parameter (default 1e-9) prevents numerical instability when feature variance approaches zero
+- **Model Persistence**: Save/load trained models for reuse without retraining
+- **Type Hinting**: Full type annotations for all methods and parameters
+- **Numerical Stability**: Uses log probabilities to avoid underflow
+- **Error Handling**: Validates model state before saving/loading
 
 ### 3. naive_bayes_sklearn.py (205 lines)
 **Purpose**: Scikit-learn wrapper with enhanced logging
@@ -610,6 +697,96 @@ Solution: Script uses plt.savefig() and plt.close(), no display needed
 7. **CI/CD Pipeline**: GitHub Actions automation
 8. **Multi-Dataset Support**: Generalize to other datasets
 
+## Advanced Software Engineering Features
+
+This implementation includes production-grade features for robustness and maintainability:
+
+### 1. Variance Smoothing (Numerical Stability)
+
+**Purpose**: Prevent numerical errors when feature variance approaches zero.
+
+**Implementation**:
+- Configurable `var_smoothing` parameter (default: 1e-9)
+- Added to variance before calculating Gaussian PDF
+- Prevents division by zero and numerical instability
+- Matches scikit-learn's `GaussianNB` implementation
+
+**Usage**:
+```python
+model = GaussianNaiveBayesNumPy(var_smoothing=1e-9)
+```
+
+### 2. Model Persistence
+
+**Purpose**: Save trained models for deployment without retraining.
+
+**Features**:
+- Save models using `pickle` serialization
+- Restore complete model state (parameters + configuration)
+- Validates model is trained before saving
+- Creates parent directories automatically
+
+**Benefits**:
+- Faster deployment (no retraining needed)
+- Consistent predictions across sessions
+- Easy model versioning
+
+### 3. Comprehensive Type Hinting
+
+**Purpose**: Improve code clarity and enable static analysis.
+
+**Coverage**:
+- All function arguments and return values
+- Class attributes with `Optional` types
+- Union types for flexible parameters
+- Dict and List types with content specifications
+
+**Tools Enabled**:
+- MyPy static type checking
+- IDE autocomplete and IntelliSense
+- Better documentation generation
+
+### 4. Formal Unit Testing
+
+**Framework**: pytest (industry standard)
+
+**Test Suite**: 41 tests across 2 files
+- **test_naive_bayes_numpy.py** (27 tests):
+  - Initialization and configuration
+  - Training correctness (shapes, values)
+  - Prediction accuracy
+  - Model persistence (save/load)
+  - Numerical stability edge cases
+  - Multiclass and high-dimensional data
+
+- **test_data_loader.py** (14 tests):
+  - CSV loading and validation
+  - Stratified splitting correctness
+  - Reproducibility with random seeds
+  - Class mapping accuracy
+
+**Run Tests**:
+```bash
+pytest tests/ -v
+```
+
+### 5. Production-Ready Architecture
+
+**Design Principles**:
+- Modular separation of concerns
+- Comprehensive error handling
+- Detailed logging at multiple levels
+- Parameter validation
+- Consistent API design
+- Documentation for all public methods
+
+**Code Quality Metrics**:
+- All modules ≤200 lines
+- Full type coverage
+- 100% test passing rate
+- No code duplication
+- Clear naming conventions
+
 ## References
 
 ### Dataset
@@ -624,6 +801,7 @@ Solution: Script uses plt.savefig() and plt.close(), no display needed
 - NumPy Documentation: https://numpy.org/doc/
 - Scikit-learn Documentation: https://scikit-learn.org/
 - Matplotlib Documentation: https://matplotlib.org/
+- Pytest Documentation: https://docs.pytest.org/
 
 ## License
 

@@ -5,10 +5,10 @@ Compare predictions and visualize results from NumPy and sklearn implementations
 """
 
 import logging
+from typing import Dict, List
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import Tuple
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ def compare_predictions(
     y_true: np.ndarray,
     y_pred_numpy: np.ndarray,
     y_pred_sklearn: np.ndarray
-) -> dict:
+) -> Dict[str, float]:
     """
     Compare predictions between NumPy and sklearn implementations.
 
@@ -69,7 +69,7 @@ def visualize_confusion_matrices(
     y_true: np.ndarray,
     y_pred_numpy: np.ndarray,
     y_pred_sklearn: np.ndarray,
-    class_names: list,
+    class_names: List[str],
     save_path: str = "logs/confusion_matrices.png"
 ) -> None:
     """
@@ -124,9 +124,9 @@ def visualize_confusion_matrices(
 
 
 def generate_comparison_report(
-    comparison_metrics: dict,
-    numpy_params: dict,
-    sklearn_params: dict
+    comparison_metrics: Dict[str, float],
+    numpy_params: Dict[str, np.ndarray],
+    sklearn_params: Dict[str, np.ndarray]
 ) -> None:
     """
     Generate comprehensive comparison report.

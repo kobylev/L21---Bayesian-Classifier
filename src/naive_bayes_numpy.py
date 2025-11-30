@@ -6,6 +6,9 @@ Mathematical Foundation: Bayes' Theorem and Gaussian PDF.
 """
 
 import logging
+import pickle
+from pathlib import Path
+from typing import Dict, Optional, Union
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,14 +16,22 @@ logger = logging.getLogger(__name__)
 
 
 class GaussianNaiveBayesNumPy:
-    """Gaussian Naive Bayes classifier from scratch."""
+    """Gaussian Naive Bayes classifier from scratch with variance smoothing."""
 
-    def __init__(self):
-        self.classes_ = None
-        self.class_priors_ = None
-        self.means_ = None
-        self.variances_ = None
-        self.epsilon_ = 1e-9
+    def __init__(self, var_smoothing: float = 1e-9):
+        """
+        Initialize Gaussian Naive Bayes classifier.
+
+        Args:
+            var_smoothing: Portion of largest variance added to all variances
+                          for numerical stability (prevents division by zero)
+        """
+        self.var_smoothing = var_smoothing
+        self.classes_: Optional[np.ndarray] = None
+        self.class_priors_: Optional[np.ndarray] = None
+        self.means_: Optional[np.ndarray] = None
+        self.variances_: Optional[np.ndarray] = None
+        self.epsilon_: float = var_smoothing
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'GaussianNaiveBayesNumPy':
         """Train the model by calculating priors, means, and variances."""
@@ -76,7 +87,7 @@ class GaussianNaiveBayesNumPy:
         logger.info("Prediction completed")
         return np.array(predictions)
 
-    def get_params(self) -> dict:
+    def get_params(self) -> Dict[str, np.ndarray]:
         """Get learned model parameters."""
         return {
             'classes': self.classes_,
@@ -84,6 +95,67 @@ class GaussianNaiveBayesNumPy:
             'means': self.means_,
             'variances': self.variances_
         }
+
+    def save_model(self, filepath: Union[str, Path]) -> None:
+        """
+        Save trained model to disk using pickle.
+
+        Args:
+            filepath: Path where model will be saved (.pkl extension recommended)
+
+        Raises:
+            ValueError: If model hasn't been trained yet
+        """
+        if self.classes_ is None:
+            raise ValueError("Model must be trained before saving. Call fit() first.")
+
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        model_state = {
+            'var_smoothing': self.var_smoothing,
+            'classes_': self.classes_,
+            'class_priors_': self.class_priors_,
+            'means_': self.means_,
+            'variances_': self.variances_,
+            'epsilon_': self.epsilon_
+        }
+
+        with open(filepath, 'wb') as f:
+            pickle.dump(model_state, f)
+
+        logger.info(f"Model saved to: {filepath}")
+
+    @classmethod
+    def load_model(cls, filepath: Union[str, Path]) -> 'GaussianNaiveBayesNumPy':
+        """
+        Load trained model from disk.
+
+        Args:
+            filepath: Path to saved model file
+
+        Returns:
+            Loaded GaussianNaiveBayesNumPy instance
+
+        Raises:
+            FileNotFoundError: If model file doesn't exist
+        """
+        filepath = Path(filepath)
+        if not filepath.exists():
+            raise FileNotFoundError(f"Model file not found: {filepath}")
+
+        with open(filepath, 'rb') as f:
+            model_state = pickle.load(f)
+
+        model = cls(var_smoothing=model_state['var_smoothing'])
+        model.classes_ = model_state['classes_']
+        model.class_priors_ = model_state['class_priors_']
+        model.means_ = model_state['means_']
+        model.variances_ = model_state['variances_']
+        model.epsilon_ = model_state['epsilon_']
+
+        logger.info(f"Model loaded from: {filepath}")
+        return model
 
 
 def visualize_feature_distributions(
